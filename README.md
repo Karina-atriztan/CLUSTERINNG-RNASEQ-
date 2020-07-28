@@ -1,3 +1,6 @@
+  
+theme: jekyll-theme-time-machine
+
 # RNA-seq-data-analysis
 Here I describe the significant steps for RNA-seq data clustering and plots using R studio
 
