@@ -1,12 +1,18 @@
+###CLUSTERING ANALYSIS USING RNASEA DATA (DIFFERENTIAL EXPRESSED GENES)
+
+
+
 #To select input directory
 setwd("path/to/input/directory")
 
 outpathcount2 = "path/to/output/directory/"
 
 
+
 dir.create(outpathcount2, showWarnings=FALSE)
 
-WE will to use all this depenmdences to performed the analysis
+#We will to use all this dependences to performed the analysis
+
 #BiocManager::install("ggplot2")
 #BiocManager::install("ggdendro")
 #BiocManager::install("reshape2")
@@ -23,13 +29,11 @@ library ("multiClust")
 library("purrr")
 library("dendextend"
 library(dynamicTreeCut))
+library(gplots)
+
+
 #Load gene expression matrix
 data.exprs <- read.table(file = "all.txt", header = TRUE, sep="\t", comment.char="", row.names = 1)
-
-
-#Clustering de perfiles genéticos
-#Unsupervised clustering and informative gene selection
-
 
 
 
@@ -45,7 +49,9 @@ hc <- hclust(as.dist(1-cor(scaledata, method="spearman")), method="complete") # 
 #Now we’re ready to generate a heatmap of the data. 
 #I like heatmap.2 in the gplots package, but you can pass the same call below to the base
 #function heatmap() if you like:
-library(gplots)
+
+
+
 heatmap.2(scaledata,
           Rowv=as.dendrogram(hr), 
           #Colv= NA,
@@ -61,7 +67,9 @@ heatmap.2(scaledata,
           density.info = "none",
           labRow = F,
           trace = "none")
-
+	
+	
+ 
 
 #Id you want to extract the column clustering, we performin the nex step
 TreeC = as.dendrogram(hc, method="average", )
