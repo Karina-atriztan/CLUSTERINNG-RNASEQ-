@@ -32,23 +32,26 @@ library(dynamicTreeCut))
 library(gplots)
 
 
-#Load gene expression matrix
+#Load gene expression matrix:
+
 data.exprs <- read.table(file = "all.txt", header = TRUE, sep="\t", comment.char="", row.names = 1)
 
 
 
-#This step  is for to scalate the data expresion because genes with high expression can affect the posterior analysis
+#This step  is for to scalate the data expresion because genes with high expression can affect the posterior analysis:
+
 data.exprs  <- as.matrix(data.exprs)
 scaledata <- t(scale(t(data.exprs))) # Centers and scales data.
 scaledata <- scaledata[complete.cases(scaledata),]
 
-# Once that data is scalated we performed the clusterization of rows and columns using the herarchical clustering + Pearson and Spearman correlation by cluster
+# Once that data is scalated we performed the clusterization of rows and columns using the herarchical clustering
+# and Pearson and Spearman correlation by cluster:
+
 hr <- hclust(as.dist(1-cor(t(scaledata), method="pearson")), method="complete") # Cluster rows by Pearson correlation.
 hc <- hclust(as.dist(1-cor(scaledata, method="spearman")), method="complete") # Clusters columns by Spearman correlation.
 
 #Now we’re ready to generate a heatmap of the data. 
-#I like heatmap.2 in the gplots package, but you can pass the same call below to the base
-#function heatmap() if you like:
+#I like heatmap.2 in the gplots package, but you can pass the same call below to the base function heatmap() if you like:
 
 
 
@@ -71,7 +74,8 @@ heatmap.2(scaledata,
 	
  
 
-#Id you want to extract the column clustering, we performin the nex step
+#Id you want to extract the column clustering, we performin the nex step:
+
 TreeC = as.dendrogram(hc, method="average", )
 plot(TreeC,
      main = "Sample Clustering",
@@ -79,13 +83,14 @@ plot(TreeC,
 )
 
 #Also if you are interested in culumn clustering, yo can perform an bootstrap analysis
-#This strep is performed when  yuu are interested in to known the similatiry  or differences between columns
+#This strep is performed when  yuu are interested in to known the similatiry  or differences between columns:
+
 boot_hc_cluster <- pvclust(data = scaledata, method.dist = "cor",
                            method.hclust = "average",
                            nboot = 10000, quiet = TRUE)
 plot(boot_hc_cluster, cex = 1, print.num = FALSE, cex.pv = 0.6, )
 
-#Now we plot the row dendrogram, using the same approach for column clustering
+#Now we plot the row dendrogram, using the same approach for column clustering:
 
 TreeR = as.dendrogram(hr, method="average")
 plot(TreeR,
@@ -96,7 +101,8 @@ plot(TreeR,
 
 #We can cut the tree high to obtain a small number of large clusters or lower to obtain many small clusters.
 #Let’s try a few different cut heights: 1.5, 1.0 and 5.0:
-#This step is performed if you  wnat to know thw best number of possible  informative clusers
+#This step is performed if you  wnat to know thw best number of possible  informative clusers:
+
 hclusth1.5 = cutree(hr, h=1.5) #cut tree at height of 1.5
 hclusth1.0 = cutree(hr, h=1.0) #cut tree at height of 1.0
 hclusth0.5 = cutree(hr, h=0.5) #cut tree at height of 0.5
@@ -104,18 +110,24 @@ hclusth0.5 = cutree(hr, h=0.5) #cut tree at height of 0.5
 head (hclusth1.5)
 str(hclusth0.5)
 
-library(dendextend)
-#plot the tree
+
+#plot the tree:
+
 plot(TreeR,
      leaflab = "none",
      main = "Gene Clustering",
      ylab = "Height")
 
-#add the three cluster vectors
+#add the three cluster vectors:
+
 the_bars <- cbind(hclusth0.5, hclusth1.0, hclusth1.5)
-#this makes the bar
+
+#this makes the bar:
+
 colored_bars(the_bars, TreeR, sort_by_labels_order = T, y_shift=-0.1, rowLabels = c("h=0.5","h=1.0","h=1.5"),cex.rowLabels=0.7)
-#this will add lines showing the cut heights
+
+#this will add lines showing the cut heights:
+
 abline(h=1.5, lty = 2, col="grey")
 abline(h=1.0, lty = 2, col="grey")
 abline(h=0.5, lty = 2, col="grey")
@@ -127,7 +139,8 @@ abline(h=0.5, lty = 2, col="grey")
 # Alternatively, we can designate the number of clusters
 #we want by using the ‘k’ option in cutree().
 #Here I’m asking for four (k=65): THis, because we before observed that 65 is the best option 
-# to analyze the clusters in our sample, it depends of size ans complexity of the sample
+# to analyze the clusters in our sample, it depends of size ans complexity of the sample:
+
 hclustk4 = cutree(hr, k=65)
 plot(TreeR,
      leaflab = "none",
