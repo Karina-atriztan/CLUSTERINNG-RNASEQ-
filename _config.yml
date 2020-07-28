@@ -1,1 +1,20 @@
 theme: jekyll-theme-time-machine
+
+RNA-seq-data-analysis
+Here I describe the significant steps for RNA-seq data clustering and plots using R studio
+
+###CLUSTERING ANALYSIS USING RNASEA DATA (DIFFERENTIAL EXPRESSED GENES)
+
+#To select input directory setwd("path/to/input/directory")
+
+outpathcount2 = "path/to/output/directory/"
+
+dir.create(outpathcount2, showWarnings=FALSE)
+
+#We will to use all this dependences to performed the analysis
+
+#BiocManager::install("ggplot2") #BiocManager::install("ggdendro") #BiocManager::install("reshape2") #BiocManager::install("factoextra") #BiocManager::install("purrr") #BiocManager::install("dendextend") #BiocManager::install("dynamicTreeCut") library("ggplot2") library("ggdendro") library("reshape2") library("grid") library("factoextra") library ("multiClust") library("purrr") library("dendextend" library(dynamicTreeCut)) library(gplots)
+
+#Load gene expression matrix data.exprs <- read.table(file = "all.txt", header = TRUE, sep="\t", comment.char="", row.names = 1)
+
+#This step is for to scalate the data expresion because genes with high expression can affect the posterior analysis data.exprs <- as.matrix(data.exprs) scaledata <- t(scale(t(data.exprs))) # Centers and scales data. scaledata <- scaledata[complete.cases(scaledata),]
