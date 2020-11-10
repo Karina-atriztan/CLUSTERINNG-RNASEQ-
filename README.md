@@ -109,8 +109,163 @@ write.table(deTabTreatment1vscontrol[deGenesTreatment1vscontrol,], file=paste(ou
 
 ```
 
+## K-means and herarchical clusering 
+
+To analaze if there are spcific clusters for time or condtions we performed a herarchical clustering and extract clusters using the K-means method
+
+### Bioconductor Packages used
+
+BiocManager::install("ggplot2")
+BiocManager::install("ggdendro")
+BiocManager::install("reshape2")
+BiocManager::install("factoextra")
+BiocManager::install("purrr")
+BiocManager::install("dendextend")
+
+```
+data.exprs <- read.table(file = "all.txt", header = TRUE, sep="\t", comment.char="", row.names = 1)
+```
+
+This step  is for to scalate the data expresion because genes with high expression can affect the posterior analysis
+
+```
+data.exprs  <- as.matrix(data.exprs)
+data.exprs  <- as.matrix(data.exprs)
+scaledata <- t(scale(t(data.exprs))) # Centers and scales data.
+scaledata <- scaledata[complete.cases(scaledata),]
+
+```
+
+Once that data is scalated we performed the clusterization of rows and columns using the herarchical clustering + Pearson and Spearman correlation by cluster
+
+```
+hr <- hclust(as.dist(1-cor(t(scaledata), method="pearson")), method="complete") # Cluster rows by Pearson correlation.
+hc <- hclust(as.dist(1-cor(scaledata, method="spearman")), method="complete") # Clusters columns by Spearman correlation.
+```
+
+## here we use a combinmation of herarchical clusterin and k-means.
+
+Here I’m asking for  (k=65): THis, because we before observed that 65 is the best option 
+to analyze the clusters in our sample, it depends of size ans complexity of the sample
+
+```
+
+hclustk4 = cutree(hr, k=65)
+tiff("dendrogram-k65.tiff", width = 6, height = 8, res= 100, units = "in") #Para exportar la imagen en alta calidad
+
+plot(TreeR,
+     leaflab = "none",
+     main = "Gene Clustering",
+     ylab = "Height")
+colored_bars(hclustk4, TreeR, sort_by_labels_order = T,
+             y_shift=-0.1, rowLabels = c("k=65"),cex.rowLabels=1.2)
+dev.off()
+
+```
+
+Set the minimum module size
+minModuleSize = 50;
 
 
+### NOW WE GO TO  PERFORMED A CLUSTERING USING THE WGCNA PACKAGE TO EXTRACT THE FORMED CLUSTERS TO FUTURE ANALYSIS
 
+Module identification using dynamic tree cut
 
+```
+BiocManager::install("WGCNA")
+library(WGCNA)
+````
+WE WILL TO USE THE SAME DENDROGRAM BEFORE CONSTRUCTED AND WILL  CUTTED USING CUTREEDYNAMIC
+```
+dynamicMods = cutreeDynamicTree(dendro = hr, maxTreeHeight = 0.5, deepSplit = TRUE, minModuleSize = 25);
+```
+
+The following command gives the module labels and the size of each module. Lable 0 is reserved for unassigned genes
+table(dynamicMods)
+
+```
+
+dynamicColors = labels2colors(dynamicMods)
+table(dynamicColors)
+write.table(table(dynamicColors), file="keycolors65K.txt", sep="\t")
+plotDendroAndColors(hr, dynamicColors, "k=65", dendroLabels = FALSE,
+                    hang = 0.03, addGuide = TRUE, guideHang = 0.05, main = "Gene dendrogram and module colors")
+
+````
+Discard the unassigned genes, and focus on the rest
+restGenes= (dynamicColors != "grey")
+
+Extract modules 
+
+```
+gene.names =row.names(data.exprs)
+n=5660
+SubGeneNames =gene.names [1:n]
+module_colors= setdiff(unique(dynamicColors), "grey")
+for (color in module_colors){
+  module= SubGeneNames[which(dynamicColors==color)]
+  write.table(module, paste("module_",color, ".txt",sep=""), sep="\t", row.names=FALSE, col.names=FALSE,quote=FALSE)
+}
+
+```
+
+If your K number produces clusters with high correlation (say above 0.85) then consider reducing the number of clusters.
+
+```
+cor(kClustcentroids)
+
+```
+
+To calculate the scores for a single cluster, in this case 2 we’ll extract the core data for cluster 2,then subset the scaled data by cluster =2. Then, we’ll calculate the ‘score’ by correlating each gene#with the cluster core. We can then plot the results for each gene with the core overlayed:
+Subset the cores molten dataframe so we can plot the core
+
+```
+core2 <- Kmolten[Kmolten$cluster=="11",]
+```
+get cluster 2 or other of of interest
+```
+K2 <- (scaledata[kClusters==11,])
+str(K2)
+```
+Save the table of the genes for the core
+```
+write.table(K2, file="ID-cluster33.txt", sep="\t")
+
+```
+
+Calculate the correlation with the core
+
+```
+corscore <- function(x){cor(x,core2$value)}
+score <- apply(K2, 1, corscore)
+
+```
+
+Get the data frame into long format for plotting
+```
+K2molten <- melt(K2)
+colnames(K2molten) <- c('gene','sample','value')
+```
+
+Add the score
+
+```
+K2molten <- merge(K2molten,score, by.x='gene',by.y='row.names', all.x=T)
+colnames(K2molten) <- c('gene','sample','value','score')
+```
+
+Order the dataframe by score, to do this first create an ordering factor
+```
+K2molten$order_factor <- 1:length(K2molten$gene)
+```
+Order the dataframe by score
+
+```
+K2molten <- K2molten[order(K2molten$gene),]
+```
+
+set the order by setting the factors
+```
+K2molten$order_factor <- factor(K2molten$order_factor , levels = K2molten$order_factor)
+```
 
