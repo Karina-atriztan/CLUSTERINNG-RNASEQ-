@@ -1,5 +1,5 @@
 # RNA-seq-data-analysis
-Here I describe the significant steps for T. atroviride RNA-seq data analysis using in the paper Atriztán-Hernández K. and Herrera-Estrella A. in press.
+Here I describe the significant steps for T. atroviride RNA-seq data analysis using in the paper Atriztán-Hernández K. and Herrera-Estrella A. 2021.
 
 ## Objetive
 Main of these repository is to concatenate tested software and pipileines for T. atroviride  RNA-seq Data analysis.
@@ -17,16 +17,31 @@ Quality of the RNA-seq data were analyzed by FastQC Version 0.11.6. Around 10 mi
 Cleaned reads were mapped to the new genome reference of T. atroviride IMI206040 (Atriztán-Hernández et al., in prep) using HISAT2 version 2.1.0. Output files were converted to BAM files for visualization on desktop app IGV://software.broadinstitute.org/software/igv/home). We use the code as next:
 
 ```
-hisat2 -q  -x HISAT_mapping/TAIMI -U trimmed/library1.fq.gz --dta --dta-cufflinks  -S HISAT_mapping/SAM/library1.sam
-samtools view -bS HISAT_mapping/SAM/library1.sam > HISAT_mapping/SAM/library1.bam
-samtools sort HISAT_mapping/SAM/library1.bam -o  HISAT_mapping/SAM/library1.sorted.bam
+module load FastQC/0.11.2
+fastqc /path-to-.fastq.gz* --outdir /path-to-outputdirectory
+
+#Trimmomatic
+module load Trimmomatic/0.32
+java -jar $TRIMMOMATIC SE -phred33 “path.to-.fastq.gz” “outputdirectory” ILLUMINACLIP:TruSeq3-SE:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
+
+#HISAT2
+module load  hisat2/2.1.0
+#create index
+hisat2-build -p 8 -f “genome.fasta”   “Output-directory”
+
+hisat2 -q  -x “path to index” -U “path to trimed-.fq.gz” --dta --dta-cufflinks  -S “path-to output-.sam”
+![image](https://user-images.githubusercontent.com/62311305/127053116-b0b7f745-433e-4953-9967-5f2bdee03d12.png)
+
 
 ```
 
 ##### Mapped reads counting and Differential expressed Analysis (DE).
 For mapping reads counting to each gene HTseq version 0.14.1. using the next code:
 ```
-htseq-count -i ID --nonunique all -m intersection-strict  --additional-attr Parent  -t mRNA   -f sam  HISAT_mapping/SAM/library1.sam  Trichoderma_atrovirideIMI206040.gff3  > results_library1.txt
+module load HTSeq/0.12.4
+htseq-count -i ID --nonunique all -m intersection-strict  --additional-attr Parent  -t mRNA   -f sam  “path-to-.sam-files”  “genome-annoatation-.gff3”  > results_.txt
+
+
 
 ```
 
@@ -49,19 +64,7 @@ logcounts= cpm(counts,log=TRUE)
 ```
 2. Using filtered data, we contructed a DGElist, group the data per replicates using the "grp" function:
 ```
-grp = c("C0","C0","C0","C0","C0",
-        "I30","I30","I30",
-      "I90","I90","I90",  
-      "I4","I4","I4",
-        "I8","I8","I8",
-        "D30","D30","D30",
-      "D90","D90","D90",
-        "D4","D4","D4",
-        "D8", "D8", "D8",
-      "OF30","OF30","OF30",
-      "OF90","OF90","OF90",
-      "OF4","OF4","OF4",
-      "OF8", "OF8", "OF8")
+grp = c("libraries by licates")
       
  dge = DGEList(counts=counts, group=grp)
 ```
